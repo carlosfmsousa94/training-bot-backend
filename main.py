@@ -2,8 +2,18 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import openai
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Allow CORS so your frontend can call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For production, replace "*" with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -39,10 +49,13 @@ Feedback (last week):
 Create a detailed weekly training plan with exercises, sets, reps, intensities, and progression notes.
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=2000,
-        temperature=0.7,
-    )
-    return {"plan": response.choices[0].message.content}
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2000,
+            temperature=0.7,
+        )
+        return {"plan": response.choices[0].message.content}
+    except Exception as e:
+        return {"error": str(e)}
